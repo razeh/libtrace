@@ -33,6 +33,7 @@
 #include <getopt.h>
 #include <signal.h>
 #include <string.h>
+#include <wandio.h>
 
 static void usage(char *argv0)
 {
@@ -137,25 +138,15 @@ int main(int argc, char *argv[])
                 compress_type = TRACE_OPTION_COMPRESSTYPE_NONE;
         }
 
-        /* I decided to be fairly generous in what I accept for the
-         * compression type string */
-        else if (strncmp(compress_type_str, "gz", 2) == 0 ||
-                        strncmp(compress_type_str, "zlib", 4) == 0) {
-                compress_type = TRACE_OPTION_COMPRESSTYPE_ZLIB;
-        } else if (strncmp(compress_type_str, "bz", 2) == 0) {
-                compress_type = TRACE_OPTION_COMPRESSTYPE_BZ2;
-        } else if (strncmp(compress_type_str, "lzo", 3) == 0) {
-                compress_type = TRACE_OPTION_COMPRESSTYPE_LZO;
-        } else if (strncmp(compress_type_str, "xz", 2) == 0) {
-                compress_type = TRACE_OPTION_COMPRESSTYPE_LZMA;
-        } else if (strncmp(compress_type_str, "no", 2) == 0) {
-                compress_type = TRACE_OPTION_COMPRESSTYPE_NONE;
-        } else {
+        else {
+            struct wandio_compression_type* compression_type = wandio_lookup_compression_type(compress_type_str);
+            if (compression_type == NULL) {
                 fprintf(stderr, "Unknown compression type: %s\n",
                         compress_type_str);
                 return 1;
         }
-
+            compress_type = compression_type->compress_type;
+        }
 
 	output=trace_create_output(argv[optind++]);
 	if (trace_is_err_output(output)) {
